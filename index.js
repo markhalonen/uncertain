@@ -100,8 +100,8 @@ var gaussianShape = [2.1806912006057086e-06,
     4.3613824012114172e-06]
 // 2. Use the margin convention practice 
 var margin = { top: 50, right: 50, bottom: 50, left: 50 }
-    , width = window.innerWidth - margin.left - margin.right // Use the window's width 
-    , height = window.innerHeight - margin.top - margin.bottom; // Use the window's height
+var width = window.innerWidth - margin.left - margin.right // Use the window's width 
+var height = window.innerHeight - margin.top - margin.bottom; // Use the window's height
 
 // The number of datapoints
 var n = gaussianShape.length;
@@ -120,7 +120,7 @@ var yScale = d3.scaleLinear()
 var line = d3.line()
     .x(function (d, i) { return xScale(i); }) // set the x values for the line generator
     .y(function (d) { return yScale(d.y); }) // set the y values for the line generator 
-    .curve(d3.curveMonotoneX) // apply smoothing to the line
+//.curve(d3.curveMonotoneX) // apply smoothing to the line
 
 // 8. An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
 var dataset = d3.range(n).map(function (d, i) { return { "y": gaussianShape[i] } })
@@ -129,9 +129,64 @@ var dataset = d3.range(n).map(function (d, i) { return { "y": gaussianShape[i] }
 var svg = d3.select("body").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
+    .attr("transform", "translate(" + margin.left / 2 + "," + margin.top / 2 + ")")
 
-svg.append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+var previousIdx = undefined
+var previousDataPoint = undefined
+
+svg.on("mousemove", function () {
+    if (d3.event.ctrlKey) {
+        var coords = d3.mouse(this);
+
+        var closestIdx = Math.floor(xScale.invert(coords[0]));
+        var yVal = yScale.invert(coords[1])
+        dataset[closestIdx] = {
+            y: yVal < 0 ? 0 : yVal
+        }
+
+        // Don't skip points.
+        if (previousIdx) {
+            if (closestIdx < previousIdx - 1) {
+                // skipped points with mouse going backward
+                for (var i = previousIdx; i > closestIdx; i = i - 1) {
+                    dataset[i] = {
+                        y: (dataset[closestIdx].y + previousDataPoint.y) / 2
+                    }
+                }
+            } else if (closestIdx > previousIdx + 1) {
+                // skipped points with mouse going forward
+                for (var i = previousIdx; i < closestIdx; i = i + 1) {
+                    dataset[i] = {
+                        y: (dataset[closestIdx].y + previousDataPoint.y) / 2
+                    }
+                }
+            }
+        }
+
+        // 9. Append the path, bind the data, and call the line generator 
+        path
+            .datum(dataset) // 10. Binds data to the line 
+            .attr("class", "line") // Assign a class for styling 
+            .attr("d", line); // 11. Calls the line generator
+
+        previousDataPoint = dataset[closestIdx]
+        previousIdx = closestIdx
+    } else {
+        previousDataPoint = undefined
+        previousIdx = undefined
+    }
+
+})
+    .append('rect')
+    .attr('class', 'click-capture')
+    .style('visibility', 'hidden')
+    .attr('x', 0)
+    .attr('y', 0)
+    .attr('width', width)
+    .attr('height', height);
+
+// svg = svg.append("g")
+//     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 // 3. Call the x axis in a group tag
 svg.append("g")
@@ -143,12 +198,12 @@ svg.append("g")
 svg.append("text")
     .attr("transform",
         "translate(" + (width / 2) + " ," +
-        (height + margin.top - 10) + ")")
+        (height + margin.top) + ")")
     .style("text-anchor", "middle")
     .text("Outcome");
 
 // 4. Call the y axis in a group tag
-svg.append("g")
+svg = svg.append("g")
     .attr("class", "y axis")
     .call(d3.axisLeft(yScale).tickValues([])); // Create an axis component with d3.axisLeft
 
@@ -167,28 +222,3 @@ var path = svg.append("path")
     .attr("class", "line") // Assign a class for styling 
     .attr("d", line); // 11. Calls the line generator 
 
-svg.on("mousemove", function () {
-    if (d3.event.ctrlKey) {
-        var coords = d3.mouse(this);
-
-        var closestIdx = Math.floor(xScale.invert(coords[0]));
-
-        dataset[closestIdx] = {
-            y: yScale.invert(coords[1])
-        }
-
-        // 9. Append the path, bind the data, and call the line generator 
-        path
-            .datum(dataset) // 10. Binds data to the line 
-            .attr("class", "line") // Assign a class for styling 
-            .attr("d", line); // 11. Calls the line generator 
-    }
-
-})
-    .append('rect')
-    .attr('class', 'click-capture')
-    .style('visibility', 'hidden')
-    .attr('x', 0)
-    .attr('y', 0)
-    .attr('width', width)
-    .attr('height', height);
