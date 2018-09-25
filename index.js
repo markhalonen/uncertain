@@ -114,7 +114,7 @@ var xScale = d3.scaleLinear()
 // 6. Y scale will use the randomly generate number 
 var yScale = d3.scaleLinear()
     .domain([0, 1]) // input 
-    .range([height, 0]); // output 
+    .range([height - margin.bottom, margin.top]); // output 
 
 // 7. d3's line generator
 var line = d3.line()
@@ -191,14 +191,14 @@ svg.on("mousemove", function () {
 // 3. Call the x axis in a group tag
 svg.append("g")
     .attr("class", "x axis")
-    .attr("transform", "translate(0," + height + ")")
+    .attr("transform", "translate(0," + (height - margin.bottom) + ")")
     .call(d3.axisBottom(xScale)); // Create an axis component with d3.axisBottom
 
 // text label for the x axis
 svg.append("text")
     .attr("transform",
         "translate(" + (width / 2) + " ," +
-        (height + margin.top) + ")")
+        (height) + ")")
     .style("text-anchor", "middle")
     .text("Outcome");
 
@@ -209,11 +209,10 @@ svg.append("g")
     .call(d3.axisLeft(yScale).tickValues([0, .5, 1])); // Create an axis component with d3.axisLeft
 
 // text label for the y axis
-svg.append("text")
-    .attr("x", 0)
-    .attr("y", (height / 2))
+svg.append("g")
+    .attr("transform", "translate(" + [0, height / 2] + ") rotate(-90)")
+    .append("text")
     .attr("dy", "1em")
-    .attr("transform", "translate(" + [margin.left, 0] + ")")
     .style("text-anchor", "middle")
     .text("Probability");
 
