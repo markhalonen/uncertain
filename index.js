@@ -109,7 +109,7 @@ var n = gaussianShape.length;
 // 5. X scale will use the index of our data
 var xScale = d3.scaleLinear()
     .domain([0, n - 1]) // input
-    .range([0, width]); // output
+    .range([margin.left, width - margin.right]); // output
 
 // 6. Y scale will use the randomly generate number 
 var yScale = d3.scaleLinear()
@@ -123,13 +123,13 @@ var line = d3.line()
 //.curve(d3.curveMonotoneX) // apply smoothing to the line
 
 // 8. An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
-var dataset = d3.range(n).map(function (d, i) { return { "y": gaussianShape[i] } })
+var dataset = d3.range(n).map(function (d, i) { return { y: gaussianShape[i] } })
 
 // 1. Add the SVG to the page and employ #2
 var svg = d3.select("body").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
-    .attr("transform", "translate(" + margin.left / 2 + "," + margin.top / 2 + ")")
+//.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
 
 var previousIdx = undefined
 var previousDataPoint = undefined
@@ -203,16 +203,17 @@ svg.append("text")
     .text("Outcome");
 
 // 4. Call the y axis in a group tag
-svg = svg.append("g")
+svg.append("g")
     .attr("class", "y axis")
-    .call(d3.axisLeft(yScale).tickValues([])); // Create an axis component with d3.axisLeft
+    .attr("transform", "translate(" + [margin.left, 0] + ")")
+    .call(d3.axisLeft(yScale).tickValues([0, .5, 1])); // Create an axis component with d3.axisLeft
 
 // text label for the y axis
 svg.append("text")
-    .attr("transform", "rotate(-90)")
-    .attr("y", 0 - margin.left)
-    .attr("x", 0 - (height / 2))
+    .attr("x", 0)
+    .attr("y", (height / 2))
     .attr("dy", "1em")
+    .attr("transform", "translate(" + [margin.left, 0] + ")")
     .style("text-anchor", "middle")
     .text("Probability");
 
