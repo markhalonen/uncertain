@@ -221,7 +221,12 @@ svg.append("g")
     .append("text")
     .attr("dy", "1em")
     .style("text-anchor", "middle")
-    .text("Probability");
+    .text("Probability")
+    .on("click", function (d) {
+        var label = prompt("Please enter the Y axis label", "Probability");
+        d3.select(this).text(label);
+    }
+    );
 
 // 9. Append the path, bind the data, and call the line generator 
 var path = svg.append("path")
