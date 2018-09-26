@@ -109,12 +109,12 @@ var n = gaussianShape.length;
 // 5. X scale will use the index of our data
 var xScale = d3.scaleLinear()
     .domain([0, n - 1]) // input
-    .range([margin.left, width - margin.right]); // output
+    .range([margin.left, margin.left + width]); // output
 
 // 6. Y scale will use the randomly generate number 
 var yScale = d3.scaleLinear()
     .domain([0, 1]) // input 
-    .range([height - margin.bottom, margin.top]); // output 
+    .range([height + margin.top, margin.top]); // output 
 
 // 7. d3's line generator
 var line = d3.line()
@@ -129,7 +129,6 @@ var dataset = d3.range(n).map(function (d, i) { return { y: gaussianShape[i] } }
 var svg = d3.select("body").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
-//.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
 
 var previousIdx = undefined
 var previousDataPoint = undefined
@@ -139,6 +138,9 @@ svg.on("mousemove", function () {
         var coords = d3.mouse(this);
 
         var closestIdx = Math.floor(xScale.invert(coords[0]));
+        if (closestIdx >= dataset.length) {
+            return
+        }
         var yVal = yScale.invert(coords[1])
         dataset[closestIdx] = {
             y: yVal < 0 ? 0 : yVal
@@ -191,16 +193,21 @@ svg.on("mousemove", function () {
 // 3. Call the x axis in a group tag
 svg.append("g")
     .attr("class", "x axis")
-    .attr("transform", "translate(0," + (height - margin.bottom) + ")")
+    .attr("transform", "translate(0," + (height + margin.top) + ")")
     .call(d3.axisBottom(xScale)); // Create an axis component with d3.axisBottom
 
 // text label for the x axis
 svg.append("text")
     .attr("transform",
         "translate(" + (width / 2) + " ," +
-        (height) + ")")
+        (height + margin.top + 40) + ")")
     .style("text-anchor", "middle")
-    .text("Outcome");
+    .text("Outcome")
+    .on("click", function (d) {
+        var label = prompt("Please enter the X axis label", "Weeks");
+        d3.select(this).text(label);
+    }
+    );
 
 // 4. Call the y axis in a group tag
 svg.append("g")
