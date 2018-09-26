@@ -207,12 +207,6 @@ function render(axis) {
         .datum(dataset)
         .attr("class", "line")
         .attr("d", line);
-
-
-
-
-
-
 }
 
 svg.on("mousemove", function () {
