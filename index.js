@@ -103,35 +103,78 @@ var margin = { top: 50, right: 50, bottom: 50, left: 50 }
 var width = window.innerWidth - margin.left - margin.right // Use the window's width 
 var height = window.innerHeight - margin.top - margin.bottom; // Use the window's height
 
-// The number of datapoints
-var n = gaussianShape.length;
+var numPoints = gaussianShape.length;
 
-// 5. X scale will use the index of our data
 var xScale = d3.scaleLinear()
-    .domain([0, n - 1]) // input
+    .domain([0, numPoints - 1]) // input
     .range([margin.left, margin.left + width]); // output
 
-// 6. Y scale will use the randomly generate number 
 var yScale = d3.scaleLinear()
-    .domain([0, 1]) // input 
-    .range([height + margin.top, margin.top]); // output 
+    .domain([0, Math.max(...gaussianShape)]) // input 
+    .range([height + margin.top, margin.top])
 
-// 7. d3's line generator
-var line = d3.line()
-    .x(function (d, i) { return xScale(i); }) // set the x values for the line generator
-    .y(function (d) { return yScale(d.y); }) // set the y values for the line generator 
-//.curve(d3.curveMonotoneX) // apply smoothing to the line
+var dataset = d3.range(numPoints).map(function (d, i) { return { y: gaussianShape[i] } })
 
-// 8. An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
-var dataset = d3.range(n).map(function (d, i) { return { y: gaussianShape[i] } })
-
-// 1. Add the SVG to the page and employ #2
 var svg = d3.select("body").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
 
 var previousIdx = undefined
 var previousDataPoint = undefined
+
+var path = undefined
+var yAxis = undefined
+function render(rescale) {
+    if (!path) {
+        path = svg.append("path")
+    }
+
+    function renderYAxis() {
+        yAxis = svg.append("g")
+            .attr("class", "y axis")
+            .attr("transform", "translate(" + [margin.left, 0] + ")")
+            .call(
+                d3.axisLeft(yScale)
+                    .ticks(3)
+            );
+
+        svg.selectAll(".y.axis .tick")
+            .on("click", function (clickedYVal) {
+                var newValue = prompt("Please enter the desired value", "2");
+                console.log(newValue)
+                dataset = dataset.map(d => {
+                    return {
+                        y: d.y * (newValue / clickedYVal)
+                    }
+                })
+                render(true)
+            })
+            ;
+    }
+
+    if (!yAxis) {
+        renderYAxis();
+    }
+
+    if (rescale) {
+        yScale.domain([0, Math.max(...dataset.map(d => d.y))])
+        svg.selectAll(".y.axis .tick").remove()
+        renderYAxis()
+    }
+
+    var line = d3.line()
+        .x(function (d, i) { return xScale(i); })
+        .y(function (d) { return yScale(d.y); })
+
+    path
+        .datum(dataset)
+        .attr("class", "line")
+        .attr("d", line);
+
+
+
+
+}
 
 svg.on("mousemove", function () {
     if (d3.event.ctrlKey) {
@@ -165,12 +208,7 @@ svg.on("mousemove", function () {
             }
         }
 
-        // 9. Append the path, bind the data, and call the line generator 
-        path
-            .datum(dataset) // 10. Binds data to the line 
-            .attr("class", "line") // Assign a class for styling 
-            .attr("d", line); // 11. Calls the line generator
-
+        render()
         previousDataPoint = dataset[closestIdx]
         previousIdx = closestIdx
     } else {
@@ -190,12 +228,10 @@ svg.on("mousemove", function () {
 // svg = svg.append("g")
 //     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-// 3. Call the x axis in a group tag
 svg.append("g")
     .attr("class", "x axis")
     .attr("transform", "translate(0," + (height + margin.top) + ")")
-    .call(d3.axisBottom(xScale)); // Create an axis component with d3.axisBottom
-
+    .call(d3.axisBottom(xScale));
 // text label for the x axis
 svg.append("text")
     .attr("transform",
@@ -208,12 +244,6 @@ svg.append("text")
         d3.select(this).text(label);
     }
     );
-
-// 4. Call the y axis in a group tag
-svg.append("g")
-    .attr("class", "y axis")
-    .attr("transform", "translate(" + [margin.left, 0] + ")")
-    .call(d3.axisLeft(yScale).tickValues([0, .5, 1])); // Create an axis component with d3.axisLeft
 
 // text label for the y axis
 svg.append("g")
@@ -228,9 +258,7 @@ svg.append("g")
     }
     );
 
-// 9. Append the path, bind the data, and call the line generator 
-var path = svg.append("path")
-    .datum(dataset) // 10. Binds data to the line 
-    .attr("class", "line") // Assign a class for styling 
-    .attr("d", line); // 11. Calls the line generator 
+render()
+
+
 
