@@ -1,4 +1,4 @@
-var gaussianShape = [2.1806912006057086e-06,
+var initialYPoints = [2.1806912006057086e-06,
     2.1806912006057086e-06,
     8.7227648024228344e-06,
     1.0903456003028544e-05,
@@ -98,22 +98,27 @@ var gaussianShape = [2.1806912006057086e-06,
     4.3613824012114172e-06,
     2.1806912006057086e-06,
     4.3613824012114172e-06]
+var initialXPoints = initialYPoints.map((v, i) => i / 2)
 // 2. Use the margin convention practice 
 var margin = { top: 50, right: 50, bottom: 50, left: 50 }
 var width = window.innerWidth - margin.left - margin.right // Use the window's width 
 var height = window.innerHeight - margin.top - margin.bottom; // Use the window's height
 
-var numPoints = gaussianShape.length;
 
 var xScale = d3.scaleLinear()
-    .domain([0, numPoints - 1]) // input
+    .domain([0, Math.max(...initialXPoints)]) // input
     .range([margin.left, margin.left + width]); // output
 
 var yScale = d3.scaleLinear()
-    .domain([0, Math.max(...gaussianShape)]) // input 
+    .domain([0, Math.max(...initialYPoints)]) // input 
     .range([height + margin.top, margin.top])
 
-var dataset = d3.range(numPoints).map(function (d, i) { return { y: gaussianShape[i] } })
+var dataset = initialYPoints.map((_, i) => {
+    return {
+        x: initialXPoints[i],
+        y: initialYPoints[i]
+    }
+})
 
 var svg = d3.select("body").append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -124,7 +129,8 @@ var previousDataPoint = undefined
 
 var path = undefined
 var yAxis = undefined
-function render(rescale) {
+var xAxis = undefined
+function render(axis) {
     if (!path) {
         path = svg.append("path")
     }
@@ -144,10 +150,11 @@ function render(rescale) {
                 console.log(newValue)
                 dataset = dataset.map(d => {
                     return {
+                        x: d.x,
                         y: d.y * (newValue / clickedYVal)
                     }
                 })
-                render(true)
+                render({ y: true })
             })
             ;
     }
@@ -156,14 +163,44 @@ function render(rescale) {
         renderYAxis();
     }
 
-    if (rescale) {
+    function renderXAxis() {
+        xAxis = svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + (height + margin.top) + ")")
+            .call(d3.axisBottom(xScale));
+
+        svg.selectAll(".x.axis .tick")
+            .on("click", function (clickedXVal) {
+                var newValue = prompt("Please enter the desired value", "2");
+                dataset = dataset.map(d => {
+                    return {
+                        x: d.x * (newValue / clickedXVal),
+                        y: d.y
+                    }
+                })
+                render({ x: true })
+            })
+            ;
+    }
+
+    if (!xAxis) {
+        renderXAxis();
+    }
+
+    if (axis && axis.y) {
         yScale.domain([0, Math.max(...dataset.map(d => d.y))])
         svg.selectAll(".y.axis .tick").remove()
         renderYAxis()
     }
 
+    if (axis && axis.x) {
+        xScale.domain([0, Math.max(...dataset.map(d => d.x))])
+        svg.selectAll(".x.axis .tick").remove()
+        renderXAxis()
+    }
+
     var line = d3.line()
-        .x(function (d, i) { return xScale(i); })
+        .x(function (d) { return xScale(d.x); })
         .y(function (d) { return yScale(d.y); })
 
     path
@@ -174,27 +211,39 @@ function render(rescale) {
 
 
 
+
+
 }
 
 svg.on("mousemove", function () {
     if (d3.event.ctrlKey) {
         var coords = d3.mouse(this);
+        var xPoint = xScale.invert(coords[0])
 
-        var closestIdx = Math.floor(xScale.invert(coords[0]));
+        var closestValue = dataset.map(d => d.x)
+            .reduce(function (prev, curr) {
+                return (Math.abs(curr - xPoint) < Math.abs(prev - xPoint) ? curr : prev);
+            });
+
+        var closestIdx = dataset.map(d => d.x).indexOf(closestValue)
+
         if (closestIdx >= dataset.length) {
             return
         }
+
         var yVal = yScale.invert(coords[1])
         dataset[closestIdx] = {
+            x: xPoint,
             y: yVal < 0 ? 0 : yVal
         }
 
-        // Don't skip points.
+        //Don't skip points.
         if (previousIdx) {
             if (closestIdx < previousIdx - 1) {
                 // skipped points with mouse going backward
                 for (var i = previousIdx; i > closestIdx; i = i - 1) {
                     dataset[i] = {
+                        x: dataset[i].x,
                         y: (dataset[closestIdx].y + previousDataPoint.y) / 2
                     }
                 }
@@ -202,6 +251,7 @@ svg.on("mousemove", function () {
                 // skipped points with mouse going forward
                 for (var i = previousIdx; i < closestIdx; i = i + 1) {
                     dataset[i] = {
+                        x: dataset[i].x,
                         y: (dataset[closestIdx].y + previousDataPoint.y) / 2
                     }
                 }
@@ -225,20 +275,17 @@ svg.on("mousemove", function () {
     .attr('width', width)
     .attr('height', height);
 
-// svg = svg.append("g")
-//     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-svg.append("g")
-    .attr("class", "x axis")
-    .attr("transform", "translate(0," + (height + margin.top) + ")")
-    .call(d3.axisBottom(xScale));
+
+
+
 // text label for the x axis
 svg.append("text")
     .attr("transform",
         "translate(" + (width / 2) + " ," +
         (height + margin.top + 40) + ")")
     .style("text-anchor", "middle")
-    .text("Outcome")
+    .text("Y (click to change)")
     .on("click", function (d) {
         var label = prompt("Please enter the X axis label", "Weeks");
         d3.select(this).text(label);
@@ -251,7 +298,7 @@ svg.append("g")
     .append("text")
     .attr("dy", "1em")
     .style("text-anchor", "middle")
-    .text("Probability")
+    .text("X (click to change)")
     .on("click", function (d) {
         var label = prompt("Please enter the Y axis label", "Probability");
         d3.select(this).text(label);
