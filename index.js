@@ -101,8 +101,8 @@ var initialYPoints = [2.1806912006057086e-06,
 var initialXPoints = initialYPoints.map((v, i) => i / 2)
 // 2. Use the margin convention practice 
 var margin = { top: 50, right: 50, bottom: 50, left: 50 }
-var width = window.innerWidth - margin.left - margin.right // Use the window's width 
-var height = window.innerHeight - margin.top - margin.bottom; // Use the window's height
+var width = window.innerWidth * .8 - margin.left - margin.right // Use the window's width 
+var height = window.innerHeight * .8 - margin.top - margin.bottom; // Use the window's height
 
 
 var xScale = d3.scaleLinear()
@@ -123,19 +123,22 @@ var dataset = initialYPoints.map((_, i) => {
 var svg = d3.select("body").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
+    .attr("id", 'chart')
 
 var previousIdx = undefined
 var previousDataPoint = undefined
-
 var path = undefined
 var yAxis = undefined
 var xAxis = undefined
-function render(axis) {
+var showYAxisTicks = true
+function render(params) {
     if (!path) {
         path = svg.append("path")
     }
 
-    function renderYAxis() {
+    function renderYAxis(showYAxisTicks) {
+        if (showYAxisTicks === false)
+            return
         yAxis = svg.append("g")
             .attr("class", "y axis")
             .attr("transform", "translate(" + [margin.left, 0] + ")")
@@ -147,7 +150,6 @@ function render(axis) {
         svg.selectAll(".y.axis .tick")
             .on("click", function (clickedYVal) {
                 var newValue = prompt("Please enter the desired value", "2");
-                console.log(newValue)
                 dataset = dataset.map(d => {
                     return {
                         x: d.x,
@@ -187,13 +189,13 @@ function render(axis) {
         renderXAxis();
     }
 
-    if (axis && axis.y) {
+    if (params && params.y) {
         yScale.domain([0, Math.max(...dataset.map(d => d.y))])
         svg.selectAll(".y.axis .tick").remove()
-        renderYAxis()
+        renderYAxis(showYAxisTicks)
     }
 
-    if (axis && axis.x) {
+    if (params && params.x) {
         xScale.domain([0, Math.max(...dataset.map(d => d.x))])
         svg.selectAll(".x.axis .tick").remove()
         renderXAxis()
@@ -202,6 +204,7 @@ function render(axis) {
     var line = d3.line()
         .x(function (d) { return xScale(d.x); })
         .y(function (d) { return yScale(d.y); })
+        .curve(d3.curveBasis)
 
     path
         .datum(dataset)
@@ -269,14 +272,10 @@ svg.on("mousemove", function () {
     .attr('width', width)
     .attr('height', height);
 
-
-
-
-
 // text label for the x axis
 svg.append("text")
     .attr("transform",
-        "translate(" + (width / 2) + " ," +
+        "translate(" + (width / 2 + margin.left) + " ," +
         (height + margin.top + 40) + ")")
     .style("text-anchor", "middle")
     .text("Y (click to change)")
@@ -299,7 +298,30 @@ svg.append("g")
     }
     );
 
+var borderPath = svg.append("rect")
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("height", height + margin.top + margin.bottom)
+    .attr("width", width + margin.left + margin.right)
+    .style("stroke", 'lightgrey')
+    .style("fill", "none")
+    .style("stroke-width", 2);
+
 render()
 
 
 
+const checkbox = document.getElementById('yAxisTicksCheckBox')
+checkbox.addEventListener('change', (event) => {
+    if (event.target.checked) {
+        showYAxisTicks = true
+        render({ y: true })
+    } else {
+        showYAxisTicks = false
+        render({ y: true })
+    }
+})
+
+document.getElementById('saveImageButton').addEventListener('click', (event) => {
+    saveSvgAsPng(document.getElementById("chart"), "diagram.png");
+})
