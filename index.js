@@ -287,7 +287,7 @@ svg.append("text")
 
 // text label for the y axis
 svg.append("g")
-    .attr("transform", "translate(" + [0, height / 2] + ") rotate(-90)")
+    .attr("transform", "translate(" + [2, height / 2] + ") rotate(-90)")
     .append("text")
     .attr("dy", "1em")
     .style("text-anchor", "middle")
