@@ -100,10 +100,12 @@ var initialYPoints = [2.1806912006057086e-06,
     4.3613824012114172e-06]
 var initialXPoints = initialYPoints.map((v, i) => i / 2)
 // 2. Use the margin convention practice 
-var margin = { top: 50, right: 50, bottom: 50, left: 50 }
-var width = window.innerWidth * .8 - margin.left - margin.right // Use the window's width 
-var height = window.innerHeight * .8 - margin.top - margin.bottom; // Use the window's height
+var widthRatio = .7
+var width = window.innerWidth * widthRatio
+var marginLateral = window.innerWidth * (1 - widthRatio) / 2
+var margin = { top: 50, right: marginLateral, bottom: 50, left: marginLateral }
 
+var height = width * 1 / 1.61 - margin.top - margin.bottom; // Use the window's height
 
 var xScale = d3.scaleLinear()
     .domain([0, Math.max(...initialXPoints)]) // input
@@ -125,26 +127,32 @@ var svg = d3.select("body").append("svg")
     .attr("height", height + margin.top + margin.bottom)
     .attr("id", 'chart')
 
+svg.append("rect")
+    .attr("x", margin.left - 50)
+    .attr("y", margin.top - 50)
+    .attr("width", width + 100)
+    .attr("height", height + 100)
+    .attr("fill", "white");
+
 var previousIdx = undefined
 var previousDataPoint = undefined
 var path = undefined
 var yAxis = undefined
 var xAxis = undefined
-var showYAxisTicks = true
+
 function render(params) {
     if (!path) {
         path = svg.append("path")
     }
 
-    function renderYAxis(showYAxisTicks) {
-        if (showYAxisTicks === false)
-            return
+    function renderYAxis() {
         yAxis = svg.append("g")
             .attr("class", "y axis")
             .attr("transform", "translate(" + [margin.left, 0] + ")")
             .call(
                 d3.axisLeft(yScale)
                     .ticks(3)
+                    .tickFormat("")
             );
 
         svg.selectAll(".y.axis .tick")
@@ -192,7 +200,7 @@ function render(params) {
     if (params && params.y) {
         yScale.domain([0, Math.max(...dataset.map(d => d.y))])
         svg.selectAll(".y.axis .tick").remove()
-        renderYAxis(showYAxisTicks)
+        renderYAxis()
     }
 
     if (params && params.x) {
@@ -278,7 +286,7 @@ svg.append("text")
         "translate(" + (width / 2 + margin.left) + " ," +
         (height + margin.top + 40) + ")")
     .style("text-anchor", "middle")
-    .text("Y (click to change)")
+    .text("X (click to change)")
     .on("click", function (d) {
         var label = prompt("Please enter the X axis label", "Weeks");
         d3.select(this).text(label);
@@ -287,11 +295,11 @@ svg.append("text")
 
 // text label for the y axis
 svg.append("g")
-    .attr("transform", "translate(" + [2, height / 2] + ") rotate(-90)")
+    .attr("transform", "translate(" + [margin.left - 35, height / 2] + ") rotate(-90)")
     .append("text")
     .attr("dy", "1em")
     .style("text-anchor", "middle")
-    .text("X (click to change)")
+    .text("Y (click to change)")
     .on("click", function (d) {
         var label = prompt("Please enter the Y axis label", "Probability");
         d3.select(this).text(label);
@@ -299,28 +307,15 @@ svg.append("g")
     );
 
 var borderPath = svg.append("rect")
-    .attr("x", 0)
-    .attr("y", 0)
-    .attr("height", height + margin.top + margin.bottom)
-    .attr("width", width + margin.left + margin.right)
+    .attr("x", margin.left - 50)
+    .attr("y", margin.top - 50)
+    .attr("height", height + 50 + 50)
+    .attr("width", width + 50 + 50)
     .style("stroke", 'lightgrey')
     .style("fill", "none")
     .style("stroke-width", 2);
 
 render()
-
-
-
-const checkbox = document.getElementById('yAxisTicksCheckBox')
-checkbox.addEventListener('change', (event) => {
-    if (event.target.checked) {
-        showYAxisTicks = true
-        render({ y: true })
-    } else {
-        showYAxisTicks = false
-        render({ y: true })
-    }
-})
 
 document.getElementById('saveImageButton').addEventListener('click', (event) => {
     saveSvgAsPng(document.getElementById("chart"), "diagram.png");
