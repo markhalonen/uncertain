@@ -242,7 +242,6 @@ svg.on("mousemove", function () {
             return
         }
 
-
         var yVal = yScale.invert(coords[1])
         dataset[closestIdx] = {
             x: xPoint,
