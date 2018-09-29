@@ -302,9 +302,11 @@ svg.append("text")
 
 // text label for the y axis
 svg.append("g")
-    .attr("transform", "translate(" + [margin.left - 35, height / 2] + ") rotate(-90)")
+    .attr("transform", "rotate(-90)")
     .append("text")
     .attr("dy", "1em")
+    .attr("y", margin.left - 35)
+    .attr("x", -height / 2 - margin.top)
     .style("text-anchor", "middle")
     .text("Y (click to change)")
     .on("click", function (d) {
