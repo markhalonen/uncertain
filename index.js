@@ -122,7 +122,7 @@ var dataset = initialYPoints.map((_, i) => {
     }
 })
 
-var svg = d3.select("body").append("svg")
+var svg = d3.select("#svgDiv").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
     .attr("id", 'chart')
@@ -224,17 +224,24 @@ svg.on("mousemove", function () {
     if (d3.event.ctrlKey) {
         var coords = d3.mouse(this);
         var xPoint = xScale.invert(coords[0])
+        if (xPoint < 0)
+            xPoint = 0
+        var dataMax = Math.max(...dataset.map(d => d.x))
+        if (xPoint > dataMax)
+            xPoint = dataMax
 
         var closestValue = dataset.map(d => d.x)
             .reduce(function (prev, curr) {
                 return (Math.abs(curr - xPoint) < Math.abs(prev - xPoint) ? curr : prev);
             });
 
+
         var closestIdx = dataset.map(d => d.x).indexOf(closestValue)
 
-        if (closestIdx >= dataset.length) {
+        if (closestIdx >= dataset.length || closestIdx < 0) {
             return
         }
+
 
         var yVal = yScale.invert(coords[1])
         dataset[closestIdx] = {
