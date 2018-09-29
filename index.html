@@ -26,8 +26,12 @@
         text-align: center;
     }
 
+    .downloadButton {
+        margin-top: 30px
+    }
+
     .footer {
-        margin-top: 50px;
+        margin-top: 30px;
         padding-bottom: 20px;
     }
 </style>
@@ -36,20 +40,22 @@
 <body>
     <div class="center">
         <h3 class="center">A Tool For Communicating Uncertainty</h3>
-        <br>
-        <button class="center" type="button" id="saveImageButton">Download Image</button>
-        <br>
-        <br>
+        <p>Hold the
+            <strong>control key</strong> to draw </p>
     </div>
-    <div id="svgDiv">
+    <div id="svgDiv" />
 
     </div>
-    <p class="center footer">Made by
-        <a href="https://markhalo.me/" target="_blank">Mark Halonen</a>
+    <div class="center downloadButton">
+        <button type="button " id="saveImageButton ">Download Image</button>
+    </div>
+
+    <p class="center footer ">Made by
+        <a href="https://markhalo.me/ " target="_blank ">Mark Halonen</a>
     </p>
 </body>
 
 <!-- Load in the d3 library -->
-<script src="https://d3js.org/d3.v4.min.js"></script>
-<script src="saveSvgAsPng.js"></script>
-<script src="index.js"></script>
+<script src="https://d3js.org/d3.v4.min.js "></script>
+<script src="saveSvgAsPng.js "></script>
+<script src="index.js "></script>

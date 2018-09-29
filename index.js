@@ -308,7 +308,7 @@ svg.append("g")
     .attr("y", margin.left - 35)
     .attr("x", -height / 2 - margin.top)
     .style("text-anchor", "middle")
-    .text("Y (click to change)")
+    .text("Probability")
     .on("click", function (d) {
         var label = prompt("Please enter the Y axis label", "Probability");
         d3.select(this).text(label);
